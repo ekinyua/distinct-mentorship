@@ -10,7 +10,7 @@ const navItems = [
 
 export function Header() {
   return (
-    <header className="sticky top-0 z-40 border-b border-border-subtle bg-background/90 backdrop-blur">
+    <header className="sticky top-2 z-40 border-b border-border-subtle bg-background/90 backdrop-blur">
       <div className="section-container flex items-center justify-between py-1 md:py-2">
         <Link href="/#hero" className="flex items-center gap-3 focus-ring">
           <Image

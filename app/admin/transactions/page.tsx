@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { ReceiptActions } from "./ReceiptActions";
 
 export const dynamic = "force-dynamic";
 
@@ -47,19 +48,34 @@ export default async function TransactionsPage() {
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-xs">
                   <span
-                    className={`inline-flex rounded-full px-2 py-0.5 text-[0.7rem] font-medium ${
-                      tx.status === "SUCCESS"
-                        ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100"
-                        : tx.status === "FAILED"
-                          ? "bg-rose-50 text-rose-700 ring-1 ring-rose-100"
-                          : "bg-amber-50 text-amber-700 ring-1 ring-amber-100"
-                    }`}
+                    className={`inline-flex rounded-full px-2 py-0.5 text-[0.7rem] font-medium ${tx.status === "SUCCESS"
+                      ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100"
+                      : tx.status === "FAILED"
+                        ? "bg-rose-50 text-rose-700 ring-1 ring-rose-100"
+                        : "bg-amber-50 text-amber-700 ring-1 ring-amber-100"
+                      }`}
                   >
                     {tx.status}
                   </span>
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-700">
-                  {tx.mpesaReceiptNumber ?? "-"}
+                  {tx.status === "SUCCESS" ? (
+                    <ReceiptActions
+                      transaction={{
+                        checkoutRequestId: tx.checkoutRequestId,
+                        resultCode: tx.resultCode ?? 1,
+                        resultDesc: tx.resultDesc ?? "",
+                        amount: tx.amount,
+                        mpesaReceiptNumber: tx.mpesaReceiptNumber ?? undefined,
+                        phoneNumber: tx.phoneNumber,
+                        transactionDate: tx.createdAt.toISOString(),
+                        description: tx.description ?? undefined,
+                        payerName: tx.payerName || undefined,
+                      }}
+                    />
+                  ) : (
+                    <span className="text-slate-400">-</span>
+                  )}
                 </td>
                 <td className="px-4 py-3 text-xs text-slate-700">
                   {tx.description ?? "-"}

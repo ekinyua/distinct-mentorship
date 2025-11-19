@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 
 import { Header } from "@/components/Header";
 import {
@@ -10,6 +10,7 @@ import {
   getServiceById,
   services,
 } from "@/lib/services";
+import { generateReceipt } from "@/lib/receipt";
 
 type PaymentState =
   | "idle"
@@ -35,7 +36,7 @@ interface TransactionDetails {
   transactionDate?: string;
 }
 
-export default function PaymentsPage() {
+function PaymentsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -75,6 +76,13 @@ export default function PaymentsPage() {
       return 2;
     return 3;
   }, [paymentState]);
+
+  // Auto-download receipt on success
+  useEffect(() => {
+    if (paymentState === "success" && transaction) {
+      generateReceipt(transaction, selectedService?.name, fullName);
+    }
+  }, [paymentState, transaction, selectedService, fullName]);
 
   function validate(): FormErrors {
     const nextErrors: FormErrors = {};
@@ -127,9 +135,8 @@ export default function PaymentsPage() {
           phoneNumber: phoneNumber.trim(),
           amount,
           accountReference: selectedService.name,
-          description: `Payment for ${
-            selectedService.name
-          } - ${fullName.trim()}`,
+          description: `Payment for ${selectedService.name} - ${fullName.trim()}`,
+          payerName: fullName,
         }),
       });
 
@@ -238,8 +245,76 @@ export default function PaymentsPage() {
     router.push("/");
   }
 
+  if (paymentState === "success" && transaction) {
+    return (
+      <div className="min-h-screen bg-background text-foreground">
+        <Header />
+        <main className="section-container py-10 flex flex-col items-center justify-center text-center">
+          <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-100 text-green-600">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+              className="h-10 w-10"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4.5 12.75l6 6 9-13.5"
+              />
+            </svg>
+          </div>
+          <h1 className="mb-2 font-serif text-3xl font-semibold text-slate-900">
+            Payment Successful
+          </h1>
+          <p className="mb-8 text-slate-600">
+            Thank you! Your payment of{" "}
+            <span className="font-semibold text-slate-900">
+              {formatPrice(transaction.amount || amount)}
+            </span>{" "}
+            has been confirmed.
+          </p>
+
+
+
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <button
+              onClick={() =>
+                generateReceipt(transaction, selectedService?.name, fullName)
+              }
+              className="cursor-pointer inline-flex items-center justify-center rounded-full border border-slate-300 px-6 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+            >
+              Download Receipt
+            </button>
+            <button
+              onClick={goHome}
+              className="cursor-pointer inline-flex items-center justify-center rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-primary/90 transition-colors"
+            >
+              Return to Home
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground relative">
+      {isBusy && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-4">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+            <p className="text-sm font-medium text-slate-600 animate-pulse">
+              {paymentState === "processing"
+                ? "Sending request to your phone..."
+                : "Waiting for M-Pesa confirmation..."}
+            </p>
+          </div>
+        </div>
+      )}
+
       <Header />
       <main className="section-container py-10">
         <button
@@ -423,23 +498,6 @@ export default function PaymentsPage() {
                       PIN.
                     </p>
                   )}
-                  {paymentState === "processing" && (
-                    <p className="flex items-center gap-2">
-                      <span className="inline-block h-3 w-3 animate-pulse rounded-full bg-primary" />
-                      Sending payment request to your phone — please wait…
-                    </p>
-                  )}
-                  {paymentState === "awaiting_confirmation" && (
-                    <p>
-                      We&apos;ve sent an STK Push to your phone. Confirm the
-                      amount and enter your PIN to complete the payment.
-                    </p>
-                  )}
-                  {paymentState === "success" && (
-                    <p className="text-green-700">
-                      Payment confirmed. A receipt has been generated below.
-                    </p>
-                  )}
                   {paymentState === "failed" && !errors.general && (
                     <p className="text-red-700">
                       The payment could not be completed. Please try again or
@@ -448,85 +506,15 @@ export default function PaymentsPage() {
                   )}
                 </div>
                 <div className="flex gap-3">
-                  {paymentState !== "success" && (
-                    <button
-                      type="submit"
-                      disabled={isBusy || !selectedService}
-                      className="btn-primary inline-flex items-center cursor-pointer justify-center rounded-full px-6 py-2 text-sm font-semibold shadow-sm disabled:cursor-not-allowed disabled:bg-slate-300"
-                    >
-                      {paymentState === "idle" && "Pay with M-Pesa"}
-                      {paymentState === "processing" && "Sending request..."}
-                      {paymentState === "awaiting_confirmation" &&
-                        "Awaiting confirmation..."}
-                      {paymentState === "failed" && "Try Again"}
-                    </button>
-                  )}
-                  {paymentState === "awaiting_confirmation" && (
-                    <button
-                      type="button"
-                      onClick={resetForm}
-                      className="inline-flex items-center justify-center rounded-full border border-slate-300 px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
-                    >
-                      Cancel
-                    </button>
-                  )}
-                  {paymentState === "success" && (
-                    <button
-                      type="button"
-                      onClick={goHome}
-                      className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-primary/90"
-                    >
-                      Return Home
-                    </button>
-                  )}
+                  <button
+                    type="submit"
+                    disabled={isBusy || !selectedService}
+                    className="btn-primary inline-flex items-center cursor-pointer justify-center rounded-full px-6 py-2 text-sm font-semibold shadow-sm disabled:cursor-not-allowed disabled:bg-slate-300"
+                  >
+                    {paymentState === "failed" ? "Try Again" : "Pay with M-Pesa"}
+                  </button>
                 </div>
               </div>
-
-              {transaction && (
-                <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-700">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="font-semibold text-slate-800">
-                      Payment receipt
-                    </p>
-                    <p className="text-[0.7rem] text-slate-500">
-                      {transaction.transactionDate ||
-                        "Time recorded at confirmation"}
-                    </p>
-                  </div>
-                  <dl className="mt-2 grid gap-x-4 gap-y-1 sm:grid-cols-2">
-                    <div>
-                      <dt className="text-slate-500">Status</dt>
-                      <dd className="font-medium">
-                        {transaction.resultCode === 0
-                          ? "Successful"
-                          : "Not successful"}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-slate-500">Amount</dt>
-                      <dd className="font-medium">
-                        {transaction.amount
-                          ? formatPrice(transaction.amount)
-                          : formatPrice(amount)}
-                      </dd>
-                    </div>
-                    {transaction.mpesaReceiptNumber && (
-                      <div>
-                        <dt className="text-slate-500">M-Pesa receipt</dt>
-                        <dd className="font-mono text-[0.75rem]">
-                          {transaction.mpesaReceiptNumber}
-                        </dd>
-                      </div>
-                    )}
-                    <div>
-                      <dt className="text-slate-500">Phone</dt>
-                      <dd className="font-medium">
-                        {transaction.phoneNumber || phoneNumber}
-                      </dd>
-                    </div>
-                  </dl>
-                </div>
-              )}
             </form>
           </section>
 
@@ -586,5 +574,22 @@ export default function PaymentsPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function PaymentsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-pulse flex flex-col items-center">
+            <div className="h-8 w-8 rounded-full bg-slate-200 mb-2"></div>
+            <div className="h-4 w-32 rounded bg-slate-200"></div>
+          </div>
+        </div>
+      }
+    >
+      <PaymentsContent />
+    </Suspense>
   );
 }

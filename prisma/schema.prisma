@@ -37,5 +37,6 @@ model Transaction {
   transactionDate   String?
   rawCallback       Json?
   environment       String            @default("sandbox")
+  payerName         String?
 }
 

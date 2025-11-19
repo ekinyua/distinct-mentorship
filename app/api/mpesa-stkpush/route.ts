@@ -8,6 +8,7 @@ interface RequestBody {
   amount: number;
   accountReference: string;
   description: string;
+  payerName?: string;
 }
 
 const PHONE_PATTERN = /^254[17]\d{8}$/;
@@ -58,6 +59,7 @@ export async function POST(req: NextRequest) {
           phoneNumber: body.phoneNumber.trim(),
           accountReference: body.accountReference,
           description,
+          payerName: body.payerName,
           status: success ? "PENDING" : "FAILED",
           environment:
             process.env.MPESA_ENV === "production" ? "production" : "sandbox",
