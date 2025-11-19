@@ -55,27 +55,48 @@ export async function POST(req: NextRequest) {
     }
 
     // Final fallback: ask Safaricom directly via STK query and update the DB
-    const result = await queryStkPush(checkoutRequestId);
-
     try {
-      await prisma.transaction.updateMany({
-        where: { checkoutRequestId },
-        data: {
-          status: result.ResultCode === 0 ? "SUCCESS" : "FAILED",
-          resultCode: result.ResultCode,
-          resultDesc: result.ResultDesc,
-        },
-      });
-    } catch (dbError) {
-      console.error("[MPESA_QUERY_DB_ERROR]", dbError);
-    }
+      const result = await queryStkPush(checkoutRequestId);
 
-    return NextResponse.json({
-      success: result.ResultCode === 0,
-      checkoutRequestId: result.CheckoutRequestID,
-      resultCode: result.ResultCode,
-      resultDesc: result.ResultDesc,
-    });
+      try {
+        await prisma.transaction.upsert({
+          where: { checkoutRequestId },
+          update: {
+            status: result.ResultCode === 0 ? "SUCCESS" : "FAILED",
+            resultCode: result.ResultCode,
+            resultDesc: result.ResultDesc,
+          },
+          create: {
+            checkoutRequestId,
+            amount: 0, // Unknown at this point if not in DB
+            phoneNumber: "", // Unknown
+            status: result.ResultCode === 0 ? "SUCCESS" : "FAILED",
+            resultCode: result.ResultCode,
+            resultDesc: result.ResultDesc,
+            description: "Created from query fallback",
+          },
+        });
+      } catch (dbError) {
+        console.error("[MPESA_QUERY_DB_ERROR]", dbError);
+      }
+
+      return NextResponse.json({
+        success: result.ResultCode === 0,
+        checkoutRequestId: result.CheckoutRequestID,
+        resultCode: result.ResultCode,
+        resultDesc: result.ResultDesc,
+      });
+    } catch (queryError) {
+      // If Safaricom query fails (e.g. transaction not found yet), return pending
+      // so the frontend keeps polling.
+      console.log("[MPESA_QUERY_PENDING]", queryError);
+      return NextResponse.json({
+        success: false,
+        checkoutRequestId,
+        resultCode: 1032, // Use a code that implies pending/cancelled or just rely on success: false
+        resultDesc: "Transaction pending or not found",
+      });
+    }
   } catch (error) {
     console.error("[MPESA_QUERY_ERROR]", error);
     return NextResponse.json(

@@ -29,9 +29,24 @@ export async function POST(req: NextRequest) {
           updateData.phoneNumber = parsed.phoneNumber;
         }
 
-        await prisma.transaction.update({
+        await prisma.transaction.upsert({
           where: { checkoutRequestId: parsed.checkoutRequestId },
-          data: updateData,
+          update: updateData,
+          create: {
+            checkoutRequestId: parsed.checkoutRequestId,
+            amount: parsed.amount || 0,
+            phoneNumber: parsed.phoneNumber || "",
+            mpesaReceiptNumber: parsed.mpesaReceiptNumber,
+            transactionDate: parsed.transactionDate,
+            resultCode: parsed.resultCode,
+            resultDesc: parsed.resultDesc,
+            status: parsed.resultCode === 0 ? "SUCCESS" : "FAILED",
+            // Default values for missing fields
+            accountReference: "Unknown",
+            description: "Created from callback",
+            environment:
+              process.env.MPESA_ENV === "production" ? "production" : "sandbox",
+          },
         });
       } catch (dbError) {
         console.error("[MPESA_CALLBACK_DB_ERROR]", dbError);
