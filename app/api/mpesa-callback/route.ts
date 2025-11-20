@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     if (parsed) {
       // Update the matching transaction in the database
       try {
-        const updateData: Prisma.TransactionUpdateInput = {
+        const updateData = {
           status: parsed.resultCode === 0 ? "SUCCESS" : "FAILED",
           resultCode: parsed.resultCode,
           resultDesc: parsed.resultDesc,
