@@ -35,7 +35,6 @@ export default async function TransactionsPage() {
             </tr>
           </thead>
           <tbody>
-            {/* @ts-expect-error - Prisma client type inference issue */}
             {transactions.map((tx) => (
               <tr key={tx.id} className="border-t border-slate-100">
                 <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-600">

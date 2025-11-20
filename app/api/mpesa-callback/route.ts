@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { parseCallbackBody, storeCallback } from "@/lib/mpesa";
 
@@ -15,7 +14,7 @@ export async function POST(req: NextRequest) {
       // Update the matching transaction in the database
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const updateData: Record<string, any> = {
+        const updateData: any = {
           status: parsed.resultCode === 0 ? "SUCCESS" : "FAILED",
           resultCode: parsed.resultCode,
           resultDesc: parsed.resultDesc,
