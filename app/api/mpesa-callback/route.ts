@@ -14,7 +14,8 @@ export async function POST(req: NextRequest) {
     if (parsed) {
       // Update the matching transaction in the database
       try {
-        const updateData = {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const updateData: Record<string, any> = {
           status: parsed.resultCode === 0 ? "SUCCESS" : "FAILED",
           resultCode: parsed.resultCode,
           resultDesc: parsed.resultDesc,
