@@ -141,7 +141,9 @@ function PaymentsContent() {
       });
 
       if (!res.ok) {
-        const errorBody = await res.json().catch(() => ({}));
+        const errorBody = (await res.json().catch(() => ({}))) as {
+          error?: string;
+        };
         const message =
           (errorBody && (errorBody.error as string)) ||
           "We couldn't start the M-Pesa payment. Please try again.";
