@@ -8,6 +8,13 @@ const serviceIcons: Record<ServiceId, string> = {
   "guidance-counselling": "💬",
 };
 
+const priceSuffix: Record<ServiceId, string> = {
+  "holiday-tuition": "per week per student",
+  "boot-camps": "per student",
+  "career-talks": "per student",
+  "guidance-counselling": "per student",
+};
+
 export function ServicesSection() {
   return (
     <section
@@ -56,7 +63,7 @@ export function ServicesSection() {
                 <p className="font-semibold text-slate-900">
                   {formatPrice(service.price)}
                   <span className="ml-1 text-xs font-normal text-slate-500">
-                    per student
+                    {priceSuffix[service.id]}
                   </span>
                 </p>
                 <Link

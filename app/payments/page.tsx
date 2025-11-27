@@ -135,7 +135,9 @@ function PaymentsContent() {
           phoneNumber: phoneNumber.trim(),
           amount,
           accountReference: selectedService.name,
-          description: `Payment for ${selectedService.name} - ${fullName.trim()}`,
+          description: `Payment for ${
+            selectedService.name
+          } - ${fullName.trim()}`,
           payerName: fullName,
         }),
       });
@@ -237,12 +239,6 @@ function PaymentsContent() {
     }
   }
 
-  function resetForm() {
-    setPaymentState("idle");
-    setErrors({});
-    setTransaction(null);
-  }
-
   function goHome() {
     router.push("/");
   }
@@ -278,8 +274,6 @@ function PaymentsContent() {
             </span>{" "}
             has been confirmed.
           </p>
-
-
 
           <div className="flex flex-col gap-3 sm:flex-row">
             <button
@@ -353,8 +347,8 @@ function PaymentsContent() {
               </div>
               <div className="hidden text-right text-xs text-slate-500 sm:block">
                 <p className="font-semibold text-slate-700">Support</p>
-                <p>+254 700 000 000</p>
-                <p>info@distinctmentorship.com</p>
+                <p>+254728730069</p>
+                <p>distinctseries@gmail.com</p>
               </div>
             </div>
 
@@ -513,7 +507,9 @@ function PaymentsContent() {
                     disabled={isBusy || !selectedService}
                     className="btn-primary inline-flex items-center cursor-pointer justify-center rounded-full px-6 py-2 text-sm font-semibold shadow-sm disabled:cursor-not-allowed disabled:bg-slate-300"
                   >
-                    {paymentState === "failed" ? "Try Again" : "Pay with M-Pesa"}
+                    {paymentState === "failed"
+                      ? "Try Again"
+                      : "Pay with M-Pesa"}
                   </button>
                 </div>
               </div>
@@ -565,6 +561,11 @@ function PaymentsContent() {
                 <li>
                   When the STK Push appears, confirm the amount and check that
                   the paybill is correct before entering your PIN.
+                </li>
+                <li>
+                  On the M-Pesa prompt, the account name will appear as{" "}
+                  <span className="font-semibold">BENJAMIN MUMINA NZIOKA</span>{" "}
+                  or <span className="font-semibold">DISTINCT MENTORSHIP</span>.
                 </li>
                 <li>
                   If you don&apos;t receive a prompt within a minute, check your

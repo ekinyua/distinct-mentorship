@@ -2,8 +2,8 @@ import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
 import { CompanyBio } from "@/components/CompanyBio";
 import { ServicesSection } from "@/components/ServicesSection";
+import { RevisionBooksSection } from "@/components/RevisionBooksSection";
 import { HowItWorks } from "@/components/HowItWorks";
-import { TrustIndicators } from "@/components/TrustIndicators";
 import { CTASection } from "@/components/CTASection";
 import { Footer } from "@/components/Footer";
 import { WhatsAppFloatingButton } from "@/components/WhatsAppFloatingButton";
@@ -16,8 +16,8 @@ export default function Home() {
         <Hero />
         <CompanyBio />
         <ServicesSection />
+        <RevisionBooksSection />
         <HowItWorks />
-        <TrustIndicators />
         <CTASection />
       </main>
       <Footer />

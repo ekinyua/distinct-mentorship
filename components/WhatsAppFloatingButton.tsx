@@ -1,7 +1,7 @@
 export function WhatsAppFloatingButton() {
-  const phoneNumber = "254700000000";
+  const phoneNumber = "254728730069";
   const message = encodeURIComponent(
-    "Hi, I would like to learn more about Distinct Mentorship services.",
+    "Hi, I would like to learn more about Distinct Mentorship services."
   );
 
   const href = `https://wa.me/${phoneNumber}?text=${message}`;
@@ -21,4 +21,3 @@ export function WhatsAppFloatingButton() {
     </a>
   );
 }
-

@@ -42,7 +42,7 @@ export function Hero() {
                 Students supported
               </p>
               <p className="text-lg font-semibold text-slate-900">
-                500+ learners
+                3,500+ learners
               </p>
             </div>
             <div>
@@ -79,7 +79,7 @@ export function Hero() {
             <p className="mb-4 text-2xl font-semibold text-slate-900">
               {formatPrice(primaryService.price)}
               <span className="ml-2 text-xs font-normal text-slate-500">
-                per student
+                per week per student
               </span>
             </p>
             <ul className="mb-6 space-y-2 text-sm text-slate-600">
