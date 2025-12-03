@@ -43,8 +43,7 @@ export async function createPaystackMpesaCharge(
   const secretKey = requirePaystackEnv("PAYSTACK_SECRET_KEY");
 
   const email =
-    process.env.PAYSTACK_CUSTOMER_EMAIL ||
-    "payments@distinctmentorship.com";
+    process.env.PAYSTACK_CUSTOMER_EMAIL || "payments@distinctmentorship.com";
 
   // Paystack expects the amount in the smallest currency unit (e.g. kobo/cents).
   const amountMinor = params.amount * 100;
@@ -75,11 +74,16 @@ export async function createPaystackMpesaCharge(
     body: JSON.stringify(body),
   });
 
-  const json = (await res.json().catch(() => ({}))) as PaystackApiResponse<
-    PaystackChargeData
-  >;
+  const json = (await res
+    .json()
+    .catch(() => ({}))) as PaystackApiResponse<PaystackChargeData>;
 
-  if (!res.ok || !json.status || !json.data || !json.data.reference) {
+  // For some channels (including Mobile Money / M-Pesa), Paystack may return
+  // a message like "Charge attempted" and a non-final status, but still
+  // include a valid `reference` that we can track via webhooks + verify API.
+  // In that case, the presence of a reference is what matters.
+
+  if (!json.data || !json.data.reference) {
     const message =
       json.message ||
       (json as { error?: string }).error ||
@@ -133,9 +137,9 @@ export async function verifyPaystackTransaction(
     }
   );
 
-  const json = (await res.json().catch(() => ({}))) as PaystackApiResponse<
-    PaystackVerifyData
-  >;
+  const json = (await res
+    .json()
+    .catch(() => ({}))) as PaystackApiResponse<PaystackVerifyData>;
 
   if (!res.ok || !json.status || !json.data || !json.data.reference) {
     console.warn("[PAYSTACK_VERIFY_FAILED]", reference, json.message);
