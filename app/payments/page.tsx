@@ -335,7 +335,7 @@ function PaymentsContent() {
                   <span className="mr-1" aria-hidden>
                     🔒
                   </span>
-                  M-Pesa Payment
+                  M-Pesa Payment (via Paystack)
                 </p>
                 <h1 className="mt-3 font-serif text-2xl font-semibold text-slate-900 sm:text-3xl">
                   Complete your enrollment payment
@@ -563,9 +563,9 @@ function PaymentsContent() {
                   the paybill is correct before entering your PIN.
                 </li>
                 <li>
-                  On the M-Pesa prompt, the account name will appear as{" "}
-                  <span className="font-semibold">BENJAMIN MUMINA NZIOKA</span>{" "}
-                  or <span className="font-semibold">DISTINCT MENTORSHIP</span>.
+                  On the M-Pesa prompt, confirm that the merchant name matches
+                  <span className="font-semibold"> Distinct Mentorship</span> or
+                  the name shown in our payment instructions.
                 </li>
                 <li>
                   If you don&apos;t receive a prompt within a minute, check your

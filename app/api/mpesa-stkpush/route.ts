@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
-import { initiateStkPush } from "@/lib/mpesa";
+import { createPaystackMpesaCharge } from "@/lib/paystack";
 
 interface RequestBody {
   phoneNumber: string;
@@ -40,29 +40,29 @@ export async function POST(req: NextRequest) {
 
     const description = body.description || body.accountReference;
 
-    const res = await initiateStkPush({
+    const charge = await createPaystackMpesaCharge({
       phoneNumber: body.phoneNumber,
       amount: body.amount,
       accountReference: body.accountReference,
       description,
+      payerName: body.payerName,
     });
 
-    const success = res.ResponseCode === "0";
+    const success = !!charge.reference;
 
     // Record the transaction in the database for later lookup
     try {
       await prisma.transaction.create({
         data: {
-          checkoutRequestId: res.CheckoutRequestID,
-          merchantRequestId: res.MerchantRequestID,
+          checkoutRequestId: charge.reference,
+          merchantRequestId: charge.reference,
           amount: body.amount,
           phoneNumber: body.phoneNumber.trim(),
           accountReference: body.accountReference,
           description,
           payerName: body.payerName,
           status: success ? "PENDING" : "FAILED",
-          environment:
-            process.env.MPESA_ENV === "production" ? "production" : "sandbox",
+          environment: "paystack",
         },
       });
     } catch (dbError) {
@@ -71,20 +71,20 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success,
-      merchantRequestId: res.MerchantRequestID,
-      checkoutRequestId: res.CheckoutRequestID,
-      responseCode: res.ResponseCode,
-      responseDescription: res.ResponseDescription,
-      customerMessage: res.CustomerMessage,
+      merchantRequestId: charge.reference,
+      checkoutRequestId: charge.reference,
+      responseCode: "0",
+      responseDescription: charge.status,
+      customerMessage:
+        charge.displayText ||
+        "A payment request has been sent to your phone. Please complete the authorization.",
     });
   } catch (error) {
     console.error("[MPESA_STK_PUSH_ERROR]", error);
-    return NextResponse.json(
-      {
-        error:
-          "We could not start the M-Pesa payment. Please check the details and try again.",
-      },
-      { status: 500 }
-    );
+    const message =
+      error instanceof Error
+        ? error.message
+        : "We could not start the M-Pesa payment. Please check the details and try again.";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

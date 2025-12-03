@@ -6,6 +6,7 @@ import {
   getStoredCallback,
   queryStkPush,
 } from "@/lib/mpesa";
+import { verifyPaystackTransaction } from "@/lib/paystack";
 
 interface QueryBody {
   checkoutRequestId: string;
@@ -54,7 +55,87 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Final fallback: ask Safaricom directly via STK query and update the DB
+    // If this is a Paystack-backed transaction, use Paystack's verify API
+    // instead of querying Safaricom directly.
+    if (tx && tx.environment === "paystack") {
+      try {
+        const verification = await verifyPaystackTransaction(checkoutRequestId);
+
+        if (verification && verification.status) {
+          const normalizedStatus = verification.status.toLowerCase();
+          const isSuccess = normalizedStatus === "success";
+          const isFinal = [
+            "success",
+            "failed",
+            "abandoned",
+            "reversed",
+          ].includes(normalizedStatus);
+
+          if (isFinal) {
+            const resultCode = isSuccess ? 0 : 1;
+            const resultDesc =
+              verification.gatewayResponse ??
+              (isSuccess ? "Success" : "Failed");
+
+            try {
+              await prisma.transaction.upsert({
+                where: { checkoutRequestId },
+                update: {
+                  status: isSuccess ? "SUCCESS" : "FAILED",
+                  resultCode,
+                  resultDesc,
+                  amount: verification.amount ?? tx.amount ?? undefined,
+                  phoneNumber:
+                    verification.customerPhone ?? tx.phoneNumber ?? undefined,
+                  transactionDate:
+                    verification.paidAt ?? tx.transactionDate ?? undefined,
+                  mpesaReceiptNumber: verification.reference,
+                  environment: "paystack",
+                },
+                create: {
+                  checkoutRequestId,
+                  amount: verification.amount ?? 0,
+                  phoneNumber: verification.customerPhone ?? "",
+                  status: isSuccess ? "SUCCESS" : "FAILED",
+                  resultCode,
+                  resultDesc,
+                  description: "Created from Paystack verify fallback",
+                  mpesaReceiptNumber: verification.reference,
+                  environment: "paystack",
+                },
+              });
+            } catch (dbError) {
+              console.error("[PAYSTACK_VERIFY_DB_ERROR]", dbError);
+            }
+
+            return NextResponse.json({
+              success: isSuccess,
+              checkoutRequestId,
+              resultCode,
+              resultDesc,
+              mpesaReceiptNumber: verification.reference,
+              amount: verification.amount ?? tx.amount,
+              phoneNumber:
+                verification.customerPhone ?? tx.phoneNumber ?? undefined,
+              transactionDate:
+                verification.paidAt ?? tx.transactionDate ?? undefined,
+            });
+          }
+        }
+      } catch (verifyError) {
+        console.error("[PAYSTACK_VERIFY_ERROR]", verifyError);
+      }
+
+      // If verification did not return a final status, treat as pending.
+      return NextResponse.json({
+        success: false,
+        checkoutRequestId,
+        resultCode: 1032,
+        resultDesc: "Transaction pending or not found",
+      });
+    }
+
+    // Final fallback for direct M-Pesa: ask Safaricom via STK query and update the DB
     try {
       const result = await queryStkPush(checkoutRequestId);
 

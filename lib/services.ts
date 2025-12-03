@@ -15,7 +15,7 @@ export const services: Service[] = [
   {
     id: "holiday-tuition",
     name: "Holiday Tuition and Mentorship",
-    price: 3000,
+    price: 3,
     description:
       "Structured holiday tuition blended with one-on-one mentorship. We reinforce core subjects, build study routines, and connect learners with mentors who model excellence. Priced at KES 3,000 per week per student.",
   },
