@@ -95,7 +95,3 @@ Then open [http://localhost:3000](http://localhost:3000) in your browser.
 - Add monitoring/alerting around API route logs for payment issues.
 
 ---
-
-## License
-
-This project is provided as a starting point/template. Adapt the copy, branding, and pricing to match your organisation's needs.
