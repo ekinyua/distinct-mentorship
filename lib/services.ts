@@ -15,9 +15,9 @@ export const services: Service[] = [
   {
     id: "holiday-tuition",
     name: "Holiday Tuition and Mentorship",
-    price: 3,
+    price: 1450,
     description:
-      "Structured holiday tuition blended with one-on-one mentorship. We reinforce core subjects, build study routines, and connect learners with mentors who model excellence. Priced at KES 3,000 per week per student.",
+      "Structured holiday tuition blended with one-on-one mentorship. We reinforce core subjects, build study routines, and connect learners with mentors who model excellence. Priced at KES 1,450 per week per student.",
   },
   {
     id: "boot-camps",
@@ -29,14 +29,14 @@ export const services: Service[] = [
   {
     id: "career-talks",
     name: "Career Talks",
-    price: 1000,
+    price: 1450,
     description:
       "Inspiring, interactive career talks that expose students to real career journeys and future pathways. Ideal for schools seeking practical guidance and motivation for their learners. Offered in schools at KES 1,000 per student, with full-school packages from KES 25,000 per school.",
   },
   {
     id: "guidance-counselling",
     name: "Guidance and Counselling",
-    price: 1000,
+    price: 1450,
     description:
       "Confidential, student-centered guidance for academic, social, and emotional challenges. We support learners and families to navigate big decisions with clarity and confidence. Sessions are KES 1,000 per student.",
   },
